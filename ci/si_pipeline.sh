@@ -1,5 +1,4 @@
 #!/bin/bash
-
 set -x +e -o pipefail
 
 # Two parameters are expected: CHANNEL and VARIANT where CHANNEL is the respective PR and
@@ -72,8 +71,8 @@ case $CLUSTER_LAUNCH_CODE in
       cp -f "$DOT_SHAKEDOWN" "$HOME/.shakedown"
       (cd tests && make init test)
       SI_CODE=$?
-      if [ ${SI_CODE} -gt 0 ]; then
-        download-diagnostics-bundle
+      if [ "$SI_CODE" -gt 0 ]; then
+        download-diagnostics-bundle || true
       fi
       dcos-launch delete
       exit "$SI_CODE" # Propagate return code.
