@@ -145,7 +145,8 @@ class TaskTest extends UnitTest with Inside {
       val f = new Fixture
 
       val condition = Condition.Unreachable
-      val taskId = Task.Id.forRunSpec(f.appWithIpAddress.id)
+      val instanceId = Instance.Id.forRunSpec(f.appWithIpAddress.id)
+      val taskId = Task.Id.forInstanceId(instanceId, None)
       val mesosStatus = MesosTaskStatusTestHelper.mesosStatus(condition, taskId, f.clock.now - 5.minutes)
       val task = TestTaskBuilder.Helper.minimalTask(taskId, f.clock.now - 5.minutes, mesosStatus, condition)
 
@@ -157,7 +158,8 @@ class TaskTest extends UnitTest with Inside {
       val f = new Fixture
 
       val condition = Condition.Reserved
-      val taskId = Task.Id.forRunSpec(f.appWithIpAddress.id)
+      val instanceId = Instance.Id.forRunSpec(f.appWithIpAddress.id)
+      val taskId = Task.Id.forInstanceId(instanceId, None)
       val status = Task.Status(f.clock.now, None, None, condition, NetworkInfoPlaceholder())
       val task = Task(taskId, f.clock.now, status)
       val instance = mock[Instance]
@@ -178,7 +180,8 @@ class TaskTest extends UnitTest with Inside {
       val f = new Fixture
 
       val condition = Condition.Running
-      val taskId = Task.Id.forRunSpec(f.appWithIpAddress.id)
+      val instanceId = Instance.Id.forRunSpec(f.appWithIpAddress.id)
+      val taskId = Task.Id.forInstanceId(instanceId, None)
       val status = Task.Status(
         stagedAt = f.clock.now,
         startedAt = Some(f.clock.now),
@@ -211,7 +214,8 @@ class TaskTest extends UnitTest with Inside {
       val f = new Fixture
 
       val condition = Condition.Staging
-      val taskId = Task.Id.forRunSpec(f.appWithIpAddress.id)
+      val instanceId = Instance.Id.forRunSpec(f.appWithIpAddress.id)
+      val taskId = Task.Id.forInstanceId(instanceId, None)
       val status = Task.Status(
         stagedAt = f.clock.now,
         startedAt = None,
@@ -244,7 +248,8 @@ class TaskTest extends UnitTest with Inside {
       val f = new Fixture
 
       val condition = Condition.Reserved
-      val taskId = Task.Id.forRunSpec(f.appWithIpAddress.id)
+      val instanceId = Instance.Id.forRunSpec(f.appWithIpAddress.id)
+      val taskId = Task.Id.forInstanceId(instanceId, None)
       val status = Task.Status(f.clock.now, None, None, condition, NetworkInfoPlaceholder())
       val task = Task(taskId, f.clock.now, status)
       val newTaskId = Task.Id.forResidentTask(task.taskId)

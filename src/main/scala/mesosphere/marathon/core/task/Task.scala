@@ -273,10 +273,10 @@ object Task {
       *
       * Use @forResidentTask when you want to launch a task on an existing reservation.
       */
-    def forRunSpec(id: PathId): Id = {
-      val taskId = id.safePath + "." + uuidGenerator.generate()
-      Task.Id(taskId)
-    }
+    //    def forRunSpec(id: PathId): Id = {
+    //      val taskId = id.safePath + "." + uuidGenerator.generate()
+    //      Task.Id(taskId)
+    //    }
 
     /**
       * Create a taskId for a pod instance's task. This will create a taskId designating the instance and each

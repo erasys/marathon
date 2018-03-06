@@ -280,7 +280,8 @@ class TasksControllerTest extends UnitTest with ScalatestRouteTest with Inside w
     "killTasks with scale and wipe fails" in new Fixture {
       Given("a request")
       val app1 = "/my/app-1".toRootPath
-      val taskId1 = Task.Id.forRunSpec(app1).idString
+      val instanceId1 = Instance.Id.forRunSpec(app1)
+      val taskId1 = Task.Id.forInstanceId(instanceId1, None).idString
       val body = s"""{"ids": ["$taskId1"]}"""
       val bodyBytes = body.toCharArray.map(_.toByte)
 
@@ -343,7 +344,8 @@ class TasksControllerTest extends UnitTest with ScalatestRouteTest with Inside w
     "killTasks fails for invalid taskId" in new Fixture {
       Given("a valid and an invalid taskId")
       val app1 = "/my/app-1".toRootPath
-      val taskId1 = Task.Id.forRunSpec(app1).idString
+      val instanceId1 = Instance.Id.forRunSpec(app1)
+      val taskId1 = Task.Id.forInstanceId(instanceId1, None).idString
       val body = s"""{"ids": ["$taskId1", "invalidTaskId"]}"""
       val bodyBytes = body.toCharArray.map(_.toByte)
 

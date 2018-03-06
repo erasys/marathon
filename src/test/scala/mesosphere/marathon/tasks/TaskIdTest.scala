@@ -12,7 +12,8 @@ class TaskIdTest extends UnitTest {
   "TaskIds" should {
     "AppIds can be converted to TaskIds and back to AppIds" in {
       val appId = "/test/foo/bla/rest".toPath
-      val taskId = Task.Id.forRunSpec(appId)
+      val instanceId = Instance.Id.forRunSpec(appId)
+      val taskId = Task.Id.forInstanceId(instanceId, None)
       taskId.runSpecId should equal(appId)
     }
 
@@ -50,7 +51,8 @@ class TaskIdTest extends UnitTest {
     }
 
     "TaskIds for resident tasks can be created from legacy taskIds" in {
-      val originalId = Task.Id.forRunSpec(PathId("/app"))
+      val instanceId = Instance.Id.forRunSpec(PathId("/app"))
+      val originalId = Task.Id.forInstanceId(instanceId, None)
       originalId.attempt shouldBe None
 
       val newTaskId = Task.Id.forResidentTask(originalId)
@@ -74,14 +76,16 @@ class TaskIdTest extends UnitTest {
     }
 
     "TaskId.reservationId is the same as task id when task id is without attempt counter" in {
-      val originalId = Task.Id.forRunSpec(PathId("/app/test/23"))
+      val instanceId = Instance.Id.forRunSpec(PathId("/app/test/23"))
+      val originalId = Task.Id.forInstanceId(instanceId, None)
       val reservationId = Task.Id.reservationId(originalId.idString)
 
       reservationId shouldEqual originalId.idString
     }
 
     "TaskId.reservationId removes attempt from app task id" in {
-      val originalId = Task.Id.forRunSpec(PathId("/app/test/23"))
+      val instanceId = Instance.Id.forRunSpec(PathId("/app/test/23"))
+      val originalId = Task.Id.forInstanceId(instanceId, None)
       val reservationIdFromOriginal = Task.Id.reservationId(originalId.idString)
 
       val residentTaskId = Task.Id.forResidentTask(originalId)
