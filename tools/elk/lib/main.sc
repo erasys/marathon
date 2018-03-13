@@ -118,12 +118,13 @@ def detectLogFormat(logFiles: Seq[Path])(implicit mat: Materializer): Option[Log
     .headOption
 }
 
-def setupTarget(target: Path): (Path, Path, Path) = {
+def setupTarget(target: Path): (Path, Path, Path, Path) = {
   val loading = target / 'loading
   val printing = target / 'printing
+  val json = target / 'json
   rm(target)
-  Seq(target,loading,printing).foreach(mkdir!(_))
-  (target, printing, loading)
+  Seq(target,loading,printing,json).foreach(mkdir!(_))
+  (target, printing, loading, json)
 }
 
 def writeFiles(entries: (Path, String)*): Unit = {
@@ -134,7 +135,7 @@ def writeFiles(entries: (Path, String)*): Unit = {
 }
 
 def generateLogstashConfig(inputPath: Path, logFormat: LogFormat, files: Map[String, Path]) = {
-  val (target, printing, loading) = setupTarget(pwd / 'target)
+  val (target, printing, loading, json) = setupTarget(pwd / 'target)
 
   // Write out the debug template set
   val tcpReader = renderTemplate(
@@ -147,18 +148,22 @@ def generateLogstashConfig(inputPath: Path, logFormat: LogFormat, files: Map[Str
     printing / "20-filters.conf" -> (read!(pwd / "conf" / "filter-marathon-1.4.x.conf")),
     printing / "30-output.conf" -> (read!(pwd / "conf" / "output-console.conf")))
 
-  files.foreach { case (host, logPath) =>
+  for {
+    (host, logPath) <- files
+    targetPath <- Seq(json, loading)
+  } {
+
     val inputConf = renderTemplate(
       pwd / "conf" / "input-file.conf.template",
       "FILE" -> util.escapeString(logPath.toString),
-      "SINCEDB" -> util.escapeString((loading / s"since-db-${host}.db").toString),
+      "SINCEDB" -> util.escapeString((targetPath / s"since-db-${host}.db").toString),
       "CODEC" -> logFormat.codec,
       "EXTRA" -> s"""|"add_field" => {
                      |  "file_host" => ${util.escapeString(host)}
                      |}
                      |""".stripMargin
     )
-    writeFiles(loading / s"10-input-${host}.conf" -> inputConf)
+    writeFiles(targetPath / s"10-input-${host}.conf" -> inputConf)
   }
 
   writeFiles(
@@ -167,6 +172,14 @@ def generateLogstashConfig(inputPath: Path, logFormat: LogFormat, files: Map[Str
     loading / "20-filters.conf" -> (read!(pwd / "conf" / "filter-marathon-1.4.x.conf")),
     loading / "30-output.conf" -> (read!(pwd / "conf" / "output-elasticsearch.conf")),
     target / "data-path.txt" -> inputPath.toString)
+
+  writeFiles(
+    json / "11-filters-host.conf" -> (read!(pwd / "conf" / "filter-overwrite-host-with-file-host.conf")),
+    json / "15-filters-format.conf" -> logFormat.unframe,
+    json / "20-filters.conf" -> (read!(pwd / "conf" / "filter-marathon-1.4.x.conf")),
+    json / "30-output.conf" -> renderTemplate(
+      pwd / "conf" / "output-json-ld.conf.template",
+      "FILE" ->  util.escapeString((target / "output.json.ld").toString)))
 }
 
 /**
@@ -190,11 +203,6 @@ def generateTargetBundle(bundlePath: Path): Unit = {
   val logFormat = detectLogFormat(unzippedLogLocations.values.toSeq).getOrElse {
     throw new Exception("Couldn't detect log format in any input files")
   }
-
-  // Write out the debug template set
-  val tcpReader = renderTemplate(
-    pwd / "conf" / "input-tcp.conf.template",
-    "CODEC" -> logFormat.codec)
 
   generateLogstashConfig(bundlePath, logFormat, unzippedLogLocations)
 
